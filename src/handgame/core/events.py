@@ -24,7 +24,7 @@ def utc_now() -> datetime:
 class FramePacket:
     camera_id: CameraId
     frame_id: int
-    frame: Any  # Np. np.ndarray, nie zapisywać na dysk/w statystykach
+    frame: Any  # e.g. np.ndarray; do not persist to disk/stats
     player_id: PlayerId | None = None
     timestamp: datetime = field(default_factory=utc_now)
 
@@ -106,7 +106,7 @@ class GameActionEvent:
     timestamp: datetime = field(default_factory=utc_now)
 
     def __post_init__(self):
-        # Payload jest zamrażany po utworzeniu - odbiorca nie może go mutować.
+        # Payload frozen after creation - receiver can't mutate it.
         object.__setattr__(self, "payload", MappingProxyType(dict(self.payload)))
 
 

@@ -1,4 +1,4 @@
-"""Testy maszyny stanów BaseGame - przejścia legalne/nielegalne, reset()."""
+"""BaseGame state machine tests - legal/illegal transitions, reset()."""
 
 from handgame.core.models import GameState
 from handgame.games.example_gesture_game import ExampleGestureGame

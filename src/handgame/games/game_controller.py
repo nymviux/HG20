@@ -1,9 +1,10 @@
-"""Qt-owa granica między czystą logiką BaseGame a resztą aplikacji.
+"""Qt boundary between pure BaseGame logic and the rest of the app.
 
-GameController tworzy/kończy minigry z rejestru, przekazuje im GestureRecognitionEvent,
-implementuje GameEventSink (strukturalnie, bez dziedziczenia) i tłumaczy jego wywołania
-na sygnały Qt konsumowane przez SessionManager. Buduje też SessionMetricsEvent po każdym
-geście - to zachowanie sesyjne wspólne dla wszystkich minigier, nie logika jednej gry.
+GameController creates/ends minigames from the registry, forwards
+GestureRecognitionEvent to them, implements GameEventSink (structurally, no
+inheritance) and translates its calls into Qt signals consumed by
+SessionManager. Also builds SessionMetricsEvent after each gesture - shared
+session behavior, not single-game logic.
 """
 
 from __future__ import annotations
@@ -26,14 +27,14 @@ from handgame.games.game_result import GameEndReason, GameResult
 
 logger = logging.getLogger(__name__)
 
-# Rejestr dostępnych minigier. Nowa minigra = jeden wpis tutaj.
+# Registry of available minigames. New minigame = one entry here.
 GAME_REGISTRY: dict[str, type[BaseGame]] = {
     ExampleGestureGame.GAME_ID: ExampleGestureGame,
 }
 
 
 class GameController(QObject):
-    """Tworzy i steruje aktywną minigrą; jedyny punkt styku SessionManager <-> BaseGame."""
+    """Creates/drives the active minigame; sole SessionManager <-> BaseGame contact point."""
 
     game_action_ready = Signal(object)  # GameActionEvent
     metrics_ready = Signal(object)  # SessionMetricsEvent
@@ -110,7 +111,7 @@ class GameController(QObject):
     def get_expected_sign(self, player_id: PlayerId) -> str | None:
         return self._game.get_expected_sign(player_id) if self._game is not None else None
 
-    # --- GameEventSink protocol (implementowane strukturalnie, bez dziedziczenia) ---
+    # --- GameEventSink protocol (implemented structurally, no inheritance) ---
 
     def on_state_changed(self, state: GameState) -> None:
         self.game_state_changed.emit(state)

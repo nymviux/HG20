@@ -48,7 +48,7 @@ class BaseInferenceWorker(QObject):
     @Slot(str, str, str)
     def set_expected_sign(self, session_id: str, player_id: str, expected_sign: str) -> None:
         self.current_session = UUID(session_id) if session_id else None
-        # Proste rzutowanie stringa na Enum w QObject Slot
+        # Cast string to Enum (Qt Slot args are plain str)
         for p in PlayerId:
             if p.name == player_id:
                 self.current_player = p

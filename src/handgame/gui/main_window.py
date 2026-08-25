@@ -10,7 +10,7 @@ from PySide6.QtCore import Qt, Slot
 logger = logging.getLogger("HandGame2")
 
 # =====================================================================
-# 1. ENUM DEFINIUJĄCY DOSTĘPNE EKRANY (GUI-CORE-4)
+# 1. ENUM DEFINING AVAILABLE SCREENS (GUI-CORE-4)
 # =====================================================================
 class Screen(Enum):
     MAIN_MENU = 0
@@ -24,12 +24,12 @@ class Screen(Enum):
 
 
 # =====================================================================
-# 2. PLACEHOLDERY WIDOKÓW (Do zastąpienia przez docelowe klasy Kamila i Oskara)
+# 2. VIEW PLACEHOLDERS (to be replaced by Kamil's and Oskar's final classes)
 # =====================================================================
-# Uwaga: Kiedy Kamil stworzy prawdziwe ekrany, po prostu zaimportujemy 
-# je tutaj (np. from gui.views.main_menu import MainMenu) i podmienimy.
+# Note: once real screens exist, import them here
+# (e.g. from gui.views.main_menu import MainMenu) and swap in.
 class DummyScreen(QWidget):
-    """Zastępczy widok do testowania routera, zanim powstaną właściwe ekrany."""
+    """Placeholder view for testing the router before real screens exist."""
     def __init__(self, name: str, router_callback):
         super().__init__()
         layout = QVBoxLayout(self)
@@ -47,68 +47,62 @@ class DummyScreen(QWidget):
 
 
 # =====================================================================
-# 3. GŁÓWNA KLASA OKNA APLIKACJI (GUI-CORE-3)
+# 3. MAIN APPLICATION WINDOW CLASS (GUI-CORE-3)
 # =====================================================================
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("HandGame 2.0")
         
-        # Docelowa rozdzielczość RPi / Optymalizacja
+        # Target RPi resolution / optimization
         self.resize(1024, 768)
         self.setMinimumSize(800, 600)
-        
-        # 1. Inicjalizacja rdzennych modułów (GUI-CORE-8)
+
+        # 1. Init core modules (GUI-CORE-8)
         self._init_core_modules()
-        
-        # 2. Inicjalizacja interfejsu (Layouty i Router)
+
+        # 2. Init UI (layouts and router)
         self._init_ui()
         
         logger.info("MainWindow zostało pomyślnie zainicjalizowane.")
 
     def _init_core_modules(self):
-        """
-        Miejsce na inicjalizację modułów zewnętrznych (kamera, AI, sesja).
-        Tutaj tworzymy instancje menedżerów.
-        """
+        """Init hook for external modules (camera, AI, session); creates manager instances."""
         logger.debug("Inicjalizacja modułów sprzętowych i logiki...")
         # TODO: self.camera_manager = CameraManager()
         # TODO: self.inference_worker = InferenceWorker()
         # TODO: self.session_manager = SessionManager()
         
-        # Zaślepki dla metody safe_teardown
+        # Placeholders for safe_teardown
         self.camera_manager = None
         self.inference_worker = None
 
     def _init_ui(self):
-        """Budowa głównego shella aplikacji (QStackedWidget)"""
-        # Centralny widget (podstawa na której leży wszystko)
+        """Builds the main app shell (QStackedWidget)."""
+        # Central widget (base for everything)
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
-        
-        # Główny layout aplikacji
+
+        # Main app layout
         self.main_layout = QVBoxLayout(self.central_widget)
-        self.main_layout.setContentsMargins(0, 0, 0, 0) # Brak marginesów wokół aplikacji
-        
-        # Router ekranów
+        self.main_layout.setContentsMargins(0, 0, 0, 0) # No margins around app
+
+        # Screen router
         self.router = QStackedWidget()
         self.main_layout.addWidget(self.router)
-        
-        # Dodawanie ekranów do routera
+
+        # Add screens to router
         self._register_screens()
-        
-        # Ustawienie ekranu startowego
+
+        # Set start screen
         self.change_screen(Screen.MAIN_MENU)
 
     def _register_screens(self):
-        """
-        Rejestracja wszystkich widoków w QStackedWidget (GUI-CORE-4).
-        Kolejność musi odpowiadać wartościom w Enum Screen.
-        """
+        """Registers all views in the QStackedWidget (GUI-CORE-4). Order must match the Screen enum values."""
         logger.debug("Rejestracja ekranów w routerze...")
         
-        # W docelowym kodzie Kamil podepnie tutaj swoje klasy:
-        # np. self.main_menu = MainMenu(router_callback=self.change_screen)
+        # Kamil will wire in his real classes here:
+        # e.g. self.main_menu = MainMenu(router_callback=self.change_screen)
         
         self.screens = {
             Screen.MAIN_MENU: DummyScreen("Menu Główne", self.change_screen),
@@ -121,28 +115,23 @@ class MainWindow(QMainWindow):
             Screen.GAME_VIEW: DummyScreen("Widok Minigry", self.change_screen),
         }
         
-        # Dodajemy widgety do routera (QStackedWidget) w prawidłowej kolejności
+        # Add widgets to router in correct order
         for screen_enum in Screen:
             if screen_enum in self.screens:
                 self.router.addWidget(self.screens[screen_enum])
 
     # =====================================================================
-    # METODY STERUJĄCE (ROUTER I STAN)
+    # CONTROL METHODS (ROUTER AND STATE)
     # =====================================================================
     @Slot(Screen)
     def change_screen(self, screen: Screen):
-        """
-        Przełącza aktualnie wyświetlany ekran.
-        """
+        """Switches the currently displayed screen."""
         logger.info(f"Przełączanie ekranu na: {screen.name}")
         self.router.setCurrentIndex(screen.value)
 
     @Slot()
     def emergency_reset(self):
-        """
-        Obsługa awaryjnego powrotu (GUI-CORE-9 / DEMO-4).
-        Zatrzymuje obecną grę/kamerę i wyrzuca gracza do Menu.
-        """
+        """Emergency return handler (GUI-CORE-9 / DEMO-4); stops current game/camera and returns to menu."""
         logger.warning("Wymuszono awaryjny reset sesji! Powrót do menu...")
         
         # TODO: self.session_manager.reset()
@@ -156,14 +145,11 @@ class MainWindow(QMainWindow):
         )
 
     # =====================================================================
-    # SPRZĄTANIE I ZAMYKANIE (GRACEFUL SHUTDOWN)
+    # CLEANUP AND SHUTDOWN (GRACEFUL SHUTDOWN)
     # =====================================================================
     @Slot()
     def safe_teardown(self):
-        """
-        Metoda zamykająca wszystkie workery i zwalniająca porty USB kamery.
-        Wywoływana przez sygnał app.aboutToQuit z main.py.
-        """
+        """Stops all workers and releases camera USB ports. Called by app.aboutToQuit from main.py."""
         logger.info("Inicjowanie procedury bezpiecznego zamykania z MainWindow (Teardown)...")
         
         if self.inference_worker:

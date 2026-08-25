@@ -1,8 +1,7 @@
-"""Typed models opisujące kontekst i parametry trudności minigry.
+"""Typed models for minigame context and difficulty parameters.
 
-Wartości domyślne w ``DIFFICULTY_PRESETS`` są placeholderem do dostrojenia
-przez zespół projektującym balans gry - nie są wynikiem żadnych testów
-rozgrywki.
+Default values in ``DIFFICULTY_PRESETS`` are placeholders for the game
+balance team to tune - not the result of any playtesting.
 """
 
 from __future__ import annotations
@@ -18,7 +17,7 @@ from handgame.core.models import CameraId, GameMode, PlayerId
 
 @dataclass(frozen=True)
 class DifficultyProfile:
-    """Parametry trudności pojedynczej rozgrywki. Poziom 1-5."""
+    """Difficulty parameters for a single game. Level 1-5."""
 
     level: int
     gesture_timeout_ms: int
@@ -48,7 +47,7 @@ class DifficultyProfile:
         object.__setattr__(self, "metadata", MappingProxyType(dict(self.metadata)))
 
 
-# Placeholder game-balance numbers - do dostrojenia przez projektanta gry.
+# Placeholder game-balance numbers - game designer to tune.
 DIFFICULTY_PRESETS: Mapping[int, DifficultyProfile] = {
     1: DifficultyProfile(1, 8000, 3000, 2000, 3, 3, 3, 0.8),
     2: DifficultyProfile(2, 6000, 2500, 1800, 3, 3, 2, 0.9),
@@ -59,7 +58,7 @@ DIFFICULTY_PRESETS: Mapping[int, DifficultyProfile] = {
 
 
 def build_difficulty_profile(level: int) -> DifficultyProfile:
-    """Buduje DifficultyProfile dla podanego poziomu (1-5) z presetu."""
+    """Builds DifficultyProfile for the given level (1-5) from presets."""
     if level not in DIFFICULTY_PRESETS:
         raise ValueError("Difficulty level musi być w przedziale 1-5")
     return DIFFICULTY_PRESETS[level]
@@ -67,7 +66,7 @@ def build_difficulty_profile(level: int) -> DifficultyProfile:
 
 @dataclass(frozen=True)
 class PlayerGameState:
-    """Migawka stanu jednego gracza w trakcie minigry."""
+    """Snapshot of one player's state during a minigame."""
 
     player_id: PlayerId
     score: int = 0
@@ -84,7 +83,7 @@ class PlayerGameState:
 
 @dataclass(frozen=True)
 class GameContext:
-    """Wszystko czego minigra potrzebuje do startu - dostarczane przez SessionManager."""
+    """Everything a minigame needs to start; provided by SessionManager."""
 
     session_id: UUID
     game_id: str

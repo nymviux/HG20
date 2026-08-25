@@ -6,7 +6,7 @@ from .events import (
 )
 
 class EventBus(QObject):
-    """Centralny punkt diagnostyczny. Nie zastępuje typowanych sygnałów między menedżerami."""
+    """Central diagnostics hub; does not replace typed signals between managers."""
     global_error = Signal(ApplicationErrorEvent)
     camera_status_changed = Signal(CameraStatusEvent)
     inference_status_changed = Signal(InferenceStatusEvent)

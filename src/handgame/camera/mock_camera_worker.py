@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class MockCameraWorker(BaseCameraWorker):
-    """Worker udający sprzęt wideo. Emituje "puste" ramki w stałych odstępach."""
+    """Fake video-hardware worker. Emits empty frames at fixed intervals."""
 
     def __init__(self, camera_id: CameraId, player_id: PlayerId | None = None, fps: int = 30):
         super().__init__(camera_id)
@@ -31,7 +31,7 @@ class MockCameraWorker(BaseCameraWorker):
     @Slot()
     def start_stream(self) -> None:
         self._set_state(CameraState.CONNECTING, "Mock connecting...")
-        # Inicjalizacja timera w obrębie poprawnego wątku (po moveToThread)
+        # Init timer on the correct thread (after moveToThread)
         self._timer = QTimer(self)
         self._timer.timeout.connect(self.emit_mock_frame)
         self._timer.start(1000 // self._fps)
@@ -57,7 +57,7 @@ class MockCameraWorker(BaseCameraWorker):
 
     @Slot(object)
     def force_error(self, message: str) -> None:
-        """Test-only hook: puts the worker into CameraState.ERROR without stopping it."""
+        """Test-only: puts worker into CameraState.ERROR without stopping it."""
         self._set_state(CameraState.ERROR, message)
         self.error_occurred.emit(
             ApplicationErrorEvent(
@@ -72,7 +72,7 @@ class MockCameraWorker(BaseCameraWorker):
 
     @Slot()
     def emit_mock_frame(self) -> None:
-        """Metoda wywoływana przez timer lub ręcznie w testach."""
+        """Called by timer, or manually in tests."""
         if self._state != CameraState.STREAMING:
             return
         self._frame_count += 1

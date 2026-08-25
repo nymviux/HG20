@@ -19,10 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class InferenceWorkerHandle(QObject):
-    """
-    Proxy żyjący w głównym wątku.
-    Sygnały są bezpiecznie przekazywane do workera w jego QThread.
-    """
+    """Proxy living in the main thread; signals are safely marshalled to the worker in its QThread."""
 
     start_requested = Signal()
     stop_requested = Signal()
@@ -51,23 +48,23 @@ class InferenceManager(QObject):
         self._is_busy: dict[CameraId, bool] = {}
 
     def start_algorithm(self, camera_id: CameraId, algorithm_id: str) -> None:
-        """Tworzy i uruchamia osobny worker AI dla wskazanej kamery."""
+        """Creates and starts a dedicated AI worker for the given camera."""
         if camera_id in self._runtimes:
             logger.warning("Inference worker already exists for %s", camera_id)
             return
 
         worker = MockInferenceWorker(camera_id=camera_id, algorithm_id=algorithm_id)
-        # Bez rodzica: cykl życia w pełni kontrolowany przez finished -> deleteLater
-        # poniżej. QThread(self) tworzyłby PODWÓJNĄ własność (kaskada rodzica C++
-        # kontra osobno zakolejkowane deleteLater na tym samym obiekcie) - potencjalny
-        # double-free, gdy InferenceManager zostaje zniszczony zanim wątek zdąży się
-        # posprzątać przez własną pętlę zdarzeń.
+        # No parent: lifecycle fully controlled via finished -> deleteLater below.
+        # QThread(self) would create DOUBLE ownership (C++ parent cascade vs a
+        # separately queued deleteLater on the same object) - risk of double-free
+        # if InferenceManager is destroyed before the thread's own event loop
+        # finishes cleanup.
         thread = QThread()
         handle = InferenceWorkerHandle()
 
         worker.moveToThread(thread)
 
-        # Manager -> worker: zawsze QueuedConnection.
+        # Manager -> worker: always QueuedConnection.
         handle.start_requested.connect(
             worker.start,
             Qt.ConnectionType.QueuedConnection,
@@ -89,7 +86,7 @@ class InferenceManager(QObject):
             Qt.ConnectionType.QueuedConnection,
         )
 
-        # Cykl życia wątku.
+        # Thread lifecycle.
         thread.started.connect(
             handle.start_requested,
             Qt.ConnectionType.QueuedConnection,
@@ -103,7 +100,7 @@ class InferenceManager(QObject):
         worker.status_changed.connect(self._on_status_changed)
         worker.error_occurred.connect(self._on_worker_error)
 
-        # Sprzątanie dopiero gdy QThread naprawdę się zatrzyma.
+        # Cleanup only after QThread actually stops.
         thread.finished.connect(lambda camera_id=camera_id: self._cleanup_runtime(camera_id))
 
         self._runtimes[camera_id] = InferenceRuntime(
@@ -120,11 +117,8 @@ class InferenceManager(QObject):
         return camera_id in self._runtimes
 
     def stop_algorithm(self, camera_id: CameraId) -> None:
-        """
-        Prosi worker o zatrzymanie.
-        Nie usuwa referencji do QThread ani workera tutaj.
-        Sprzątanie odbędzie się w _cleanup_runtime po thread.finished.
-        """
+        """Requests the worker to stop. Does not remove QThread/worker refs here;
+        cleanup happens in _cleanup_runtime after thread.finished."""
         runtime = self._runtimes.get(camera_id)
         if runtime is None:
             return
@@ -138,10 +132,7 @@ class InferenceManager(QObject):
 
     @Slot(object)
     def process_frame(self, packet: FramePacket) -> None:
-        """
-        Latest frame wins:
-        jeżeli worker nadal przetwarza poprzednią ramkę, bieżąca zostaje odrzucona.
-        """
+        """Latest frame wins: if the worker is still processing the previous frame, this one is dropped."""
         camera_id = packet.camera_id
         runtime = self._runtimes.get(camera_id)
 
@@ -191,7 +182,7 @@ class InferenceManager(QObject):
         if event.camera_id is not None:
             self._states[event.camera_id] = event.current_state
 
-            # Przy błędzie AI odblokuj ewentualne oczekiwanie na wynik.
+            # On AI error, unblock any pending wait for a result.
             if event.current_state == InferenceState.ERROR:
                 self._is_busy[event.camera_id] = False
 
@@ -212,11 +203,7 @@ class InferenceManager(QObject):
 
     @Slot()
     def _cleanup_runtime(self, camera_id: CameraId) -> None:
-        """
-        Wywoływane dopiero po thread.finished.
-        W tym momencie QThread nie pracuje, więc można usunąć referencje.
-
-        """
+        """Called only after thread.finished; QThread is no longer running, so refs can be removed."""
         logger.info("Inference thread stopped for %s", camera_id)
 
         self._runtimes.pop(camera_id, None)
@@ -224,11 +211,8 @@ class InferenceManager(QObject):
         self._is_busy.pop(camera_id, None)
 
     def shutdown(self, timeout_ms: int = 3_000) -> None:
-        """
-        Bezpieczne zatrzymanie wszystkich workerów.
-        Worker sam emituje finished -> thread.quit -> thread.finished.
-        Następnie wait() potwierdza faktyczne zatrzymanie.
-        """
+        """Safely stops all workers. Worker emits finished -> thread.quit -> thread.finished;
+        wait() then confirms the actual stop."""
         camera_ids = list(self._runtimes.keys())
 
         for camera_id in camera_ids:
@@ -245,12 +229,12 @@ class InferenceManager(QObject):
                     timeout_ms,
                     camera_id,
                 )
-                # Awaryjne opuszczenie event loop, bez thread.terminate().
+                # Fallback: force event loop exit, without thread.terminate().
                 runtime.thread.quit()
                 runtime.thread.wait(1_000)
 
-        # W przypadku testów bez pełnej pętli zdarzeń Qt
-        # finished może nie zdążyć wywołać _cleanup_runtime.
+        # In tests without a full Qt event loop, finished may not
+        # fire _cleanup_runtime in time.
         for camera_id in list(self._runtimes.keys()):
             runtime = self._runtimes[camera_id]
             if not runtime.thread.isRunning():

@@ -1,12 +1,11 @@
-"""Małe, współdzielone narzędzia Qt dla bezpiecznego zamykania wątków.
+"""Shared Qt helpers for safe thread shutdown.
 
-QThread.wait() blokuje wątek wywołujący bez pompowania jego pętli zdarzeń.
-Gdy zatrzymanie workera zależy od crossthreadowego QueuedConnection
-(worker.finished -> thread.quit), zwykłe wait(timeout_ms) w wątku głównym
-NIGDY nie pozwoli tej kolejce się wykonać - wait() zawsze czeka pełny
-timeout, mimo że worker skończył pracę dawno temu. wait_for_thread_stopped()
-naprzemiennie pompuje zdarzenia i odpytuje wątek, więc zamknięcie kończy się
-tak szybko, jak faktycznie się zatrzyma.
+QThread.wait() blocks the caller without pumping its event loop. If worker
+shutdown relies on a cross-thread QueuedConnection (worker.finished ->
+thread.quit), wait(timeout_ms) on the main thread never lets that queued
+call run - it always blocks the full timeout even though the worker finished
+long ago. wait_for_thread_stopped() alternates pumping events and polling
+the thread, so shutdown completes as soon as the thread actually stops.
 """
 
 from __future__ import annotations
@@ -17,10 +16,10 @@ from PySide6.QtCore import QCoreApplication, QThread
 
 
 def wait_for_thread_stopped(thread: QThread, timeout_ms: int, poll_ms: int = 10) -> bool:
-    """Czeka aż `thread` faktycznie się zatrzyma, pompując przy tym zdarzenia
-    wątku wywołującego (żeby zakolejkowane thread.quit() miało szansę się wykonać).
+    """Waits for `thread` to stop, pumping the caller's event loop so a
+    queued thread.quit() can run.
 
-    Zwraca True jeśli wątek zatrzymał się przed upływem timeout_ms.
+    Returns True if the thread stopped before timeout_ms elapsed.
     """
     deadline = time.monotonic() + (timeout_ms / 1000.0)
     while thread.isRunning():

@@ -6,15 +6,12 @@ import traceback
 from PySide6.QtWidgets import QApplication, QMessageBox, QMainWindow
 from PySide6.QtCore import Qt
 
-# Docelowe importy (odkomentuj, gdy pliki będą gotowe):
+# Real imports (uncomment once ready):
 # from handgame.gui.widgets.main_window import MainWindow
 from handgame.gui.integration_controller import GUIIntegrationController
 
 def setup_logging() -> logging.Logger:
-    """
-    Konfiguruje globalny system logowania z rotacją plików,
-    aby nie zapchać pamięci (np. karty SD na Raspberry Pi).
-    """
+    """Set up global logging with rotating file handler (avoids filling storage, e.g. RPi SD card)."""
     logger = logging.getLogger("HandGame2")
     logger.setLevel(logging.DEBUG)
 
@@ -39,7 +36,7 @@ def setup_logging() -> logging.Logger:
 
 
 def global_exception_hook(exc_type, exc_value, exc_traceback):
-    """Globalny przechwytywacz błędów."""
+    """Global exception hook."""
     logger = logging.getLogger("HandGame2")
     
     if issubclass(exc_type, KeyboardInterrupt):
@@ -59,21 +56,21 @@ def global_exception_hook(exc_type, exc_value, exc_traceback):
 
 
 def main():
-    # 1. Inicjalizacja logowania i hooków
+    # 1. Set up logging and hooks
     logger = setup_logging()
     logger.info("Uruchamianie aplikacji HandGame 2.0...")
     sys.excepthook = global_exception_hook
 
-    # 2. Inicjalizacja frameworku PySide6
+    # 2. Init PySide6
     app = QApplication(sys.argv)
     app.setApplicationName("HandGame 2.0")
     app.setAttribute(Qt.ApplicationAttribute.AA_UseHighDpiPixmaps)
 
     try:
-        # 3. Inicjalizacja "Mózgu" aplikacji (Backend/Kontrakt)
+        # 3. Init app "brain" (backend/contract)
         controller = GUIIntegrationController()
 
-        # 4. Inicjalizacja głównego okna aplikacji (Frontend)
+        # 4. Init main window (frontend)
         class DummyMainWindow(QMainWindow):
             def __init__(self, ctrl):
                 super().__init__()
@@ -88,19 +85,19 @@ def main():
         window = DummyMainWindow(controller)
         window.show()
 
-        # 5. Podpięcie KONTRAKTU BEZPIECZNEGO ZAMYKANIA
-        # Sygnał aboutToQuit najpierw powiadomi okno, a potem wywoła shutdown() w kontrolerze, 
-        # co bezpiecznie zatrzyma workery kamer i AI bez wywoływania crasha[cite: 2].
+        # 5. Wire up safe-shutdown contract
+        # aboutToQuit notifies the window first, then calls controller.shutdown(),
+        # which stops camera/AI workers cleanly without crashing.
         app.aboutToQuit.connect(window.safe_teardown)
         app.aboutToQuit.connect(controller.shutdown)
 
-        # Opcjonalnie: Symulacja rozpoczęcia testowej gry na starcie
+        # Optional: simulate starting a test game on launch
         # controller.select_camera("CAMERA_1", "PLAYER_1")
         # controller.prepare_game("PUZZLE", 1)
 
         logger.info("Aplikacja gotowa, wchodzenie w główną pętlę zdarzeń (Event Loop).")
         
-        # 6. BLOKUJĄCA PĘTLA APLIKACJI
+        # 6. Blocking app event loop
         exit_code = app.exec()
         logger.info(f"Aplikacja zakończyła działanie z kodem wyjścia: {exit_code}")
         sys.exit(exit_code)

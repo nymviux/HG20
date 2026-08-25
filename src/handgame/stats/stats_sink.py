@@ -9,11 +9,11 @@ logger = logging.getLogger(__name__)
 
 
 class StatsSink(QObject):
-    """Zapisuje statystyki bezpieczne dla RODO. Brak zapisu obrazów.
+    """Records GDPR-safe stats only; never stores images.
 
-    Każda metoda ekstrahuje wyłącznie nazwane pola (nigdy vars(event)/__dict__),
-    więc dane ramki/obrazu/wideo strukturalnie nie mogą tu trafić, nawet gdyby
-    kiedyś zostały dodane do jednego z powyższych typów eventów.
+    Each method extracts only named fields (never vars(event)/__dict__), so
+    frame/image/video data can't leak in here even if later added to these
+    event types.
     """
 
     def __init__(self):

@@ -1,24 +1,24 @@
 # HandGame 2.0
 
-Modułowa aplikacja edukacyjna do nauki wybranych znaków PJM z wykorzystaniem rozpoznawania gestów dłoni.
+Modular educational app for learning selected PJM (Polish Sign Language) signs using hand gesture recognition.
 
-## Wymagania
+## Requirements
 
 - Python 3.11
 - Poetry
 
-## Inicjalizacja repozytorium
+## Repository setup
 
 ### GitHub
 
-1. Utwórz nowe prywatne repozytorium na GitHub.
-2. Sklonuj repo lokalnie:
+1. Create a new private repository on GitHub.
+2. Clone it locally:
    ```bash
-   git clone <URL_REPO>
+   git clone <REPO_URL>
    cd handgame-app
    ```
-3. Skopiuj pliki szablonu do katalogu projektu.
-4. Dodaj pierwszy commit:
+3. Copy the template files into the project directory.
+4. Add the first commit:
    ```bash
    git add .
    git commit -m "chore: initialize project"
@@ -27,45 +27,45 @@ Modułowa aplikacja edukacyjna do nauki wybranych znaków PJM z wykorzystaniem r
 
 ### GitLab
 
-1. Utwórz nowy prywatny projekt w GitLab.
-2. Sklonuj repo lokalnie:
+1. Create a new private project in GitLab.
+2. Clone it locally:
    ```bash
-   git clone <URL_REPO>
+   git clone <REPO_URL>
    cd handgame-app
    ```
-3. Skopiuj pliki szablonu do katalogu projektu.
-4. Dodaj pierwszy commit:
+3. Copy the template files into the project directory.
+4. Add the first commit:
    ```bash
    git add .
    git commit -m "chore: initialize project"
    git push -u origin main
    ```
 
-## Instalacja zależności
+## Installing dependencies
 
 ```bash
 poetry install
 ```
 
-## Aktywacja pre-commit
+## Enabling pre-commit
 
 ```bash
 poetry run pre-commit install
 ```
 
-## Uruchomienie aplikacji
+## Running the app
 
 ```bash
 poetry run python -m handgame.main
 ```
 
-Alternatywnie:
+Alternatively:
 
 ```bash
 poetry run handgame
 ```
 
-## Proponowana minimalna struktura katalogów
+## Suggested minimal directory structure
 
 ```text
 handgame-app/
@@ -82,9 +82,9 @@ handgame-app/
 └── README.md
 ```
 
-## Minimalny plik startowy
+## Minimal entry point
 
-Utwórz `src/handgame/main.py`:
+Create `src/handgame/main.py`:
 
 ```python
 from PySide6.QtWidgets import QApplication, QLabel
@@ -103,9 +103,9 @@ if __name__ == "__main__":
     main()
 ```
 
-## Rady
+## Tips
 
-- Nie commituj środowiska `.venv/`.
-- Nie wrzucaj do repo nagrań z kamer, zrzutów ramek, lokalnych baz SQLite i dużych modeli AI.
-- Wszystkie zmiany wprowadzaj przez branche i Merge Request / Pull Request.
-- Trzymaj kod źródłowy w `src/`, testy w `tests/`, a zasoby aplikacji w `assets/`.
+- Don't commit the `.venv/` environment.
+- Don't push camera recordings, frame dumps, local SQLite databases, or large AI models to the repo.
+- Make all changes through branches and a Merge Request / Pull Request.
+- Keep source code in `src/`, tests in `tests/`, and app assets in `assets/`.

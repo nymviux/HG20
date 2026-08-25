@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class MockResultSpec:
-    """Deterministyczny wynik do wstrzyknięcia w testach przez configure_mock_result()."""
+    """Deterministic result injected in tests via configure_mock_result()."""
 
     recognized_sign: str | None = None
     confidence: float = 0.95
@@ -45,7 +45,7 @@ class MockInferenceWorker(BaseInferenceWorker):
     @Slot()
     def start(self) -> None:
         self._set_state(InferenceState.STARTING)
-        # Symulacja natychmiastowej gotowości (w prod tu ładujemy model)
+        # Simulate instant readiness (prod would load the model here)
         self._set_state(InferenceState.READY)
         logger.info(f"Inference worker {self.camera_id} ready.")
 
@@ -63,7 +63,7 @@ class MockInferenceWorker(BaseInferenceWorker):
 
     @Slot(object)
     def submit_frame(self, packet: FramePacket) -> None:
-        """Prosta symulacja - w prod to będzie blokujący model AI."""
+        """Simple simulation; prod will use a blocking AI model."""
         if self._state not in (InferenceState.READY, InferenceState.PROCESSING):
             return
 
@@ -89,7 +89,7 @@ class MockInferenceWorker(BaseInferenceWorker):
             confidence = spec.confidence
             is_correct = spec.is_correct
         else:
-            # Domyślne zachowanie (bez konfiguracji) - niezmienione względem poprzedniej wersji.
+            # Default behavior (no config) - unchanged from previous version.
             rec_sign = self.expected_sign if self.expected_sign else "A"
             is_correct = (rec_sign == self.expected_sign) if self.expected_sign else None
             confidence = 0.95
@@ -99,8 +99,8 @@ class MockInferenceWorker(BaseInferenceWorker):
             player_id=packet.player_id or self.current_player or PlayerId.PLAYER_1,  # Fallback
             camera_id=packet.camera_id,
             algorithm_id=self.algorithm_id,
-            # "" oznacza "brak oczekiwanego znaku" (patrz set_expected_sign) - event
-            # dataclass zabrania pustego stringa, więc mapujemy na None.
+            # "" means "no expected sign" (see set_expected_sign); the event
+            # dataclass disallows empty strings, so map to None.
             expected_sign=self.expected_sign or None,
             recognized_sign=rec_sign,
             confidence=confidence,

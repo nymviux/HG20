@@ -1,11 +1,11 @@
-"""Referencyjna minigra demonstrująca API BaseGame.
+"""Reference minigame demonstrating the BaseGame API.
 
-Każdy gracz dostaje sekwencję 3-5 oczekiwanych znaków (długość z
-DifficultyProfile.sequence_length). Poprawny gest -> punkt i kolejny krok.
-Błędny gest -> licznik pomyłek. Po ukończeniu sekwencji przez wszystkich
-graczy gra kończy się automatycznie z GameEndReason.COMPLETED.
+Each player gets a sequence of 3-5 expected signs (length from
+DifficultyProfile.sequence_length). Correct gesture -> point + next step.
+Wrong gesture -> mistake counter. Once all players finish their sequence,
+the game ends automatically with GameEndReason.COMPLETED.
 
-Nie wymaga kamery ani prawdziwego modelu AI - w pełni testowalna w izolacji.
+No camera or real AI model needed - fully testable in isolation.
 """
 
 from __future__ import annotations
@@ -21,12 +21,12 @@ from handgame.games.game_result import GameEndReason, GameResult
 
 logger = logging.getLogger(__name__)
 
-# Placeholder pula znaków PJM - do podmiany na realny słownik przez zespół gry.
+# Placeholder PJM sign pool - team to replace with real dictionary.
 _SIGN_POOL: list[str] = ["A", "B", "C", "D", "E"]
 
 
 class ExampleGestureGame(BaseGame):
-    """Prosty, w pełni testowalny wzorzec minigry typu "powtórz sekwencję"."""
+    """Simple, fully testable "repeat the sequence" minigame."""
 
     GAME_ID: ClassVar[str] = "EXAMPLE_GESTURE_GAME"
     ACTION_TYPE_GESTURE_INPUT: ClassVar[str] = "GESTURE_INPUT"
@@ -45,7 +45,7 @@ class ExampleGestureGame(BaseGame):
         self._enter_running()
 
     def update_frame(self, delta_ms: float) -> None:
-        # Referencyjna gra nie ma logiki czasowej (brak timeoutów/hintów na czas).
+        # No time-based logic here (no timeouts/timed hints).
         pass
 
     def get_expected_sign(self, player_id: PlayerId) -> str | None:

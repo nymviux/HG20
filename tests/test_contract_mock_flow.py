@@ -7,11 +7,9 @@ from handgame.recognition.mock_inference_worker import MockResultSpec
 
 
 def test_full_mock_flow_without_crashing(qtbot) -> None:
-    """
-    Sprawdza przepływ:
-    MockCamera -> Inference -> Session -> Stats -> GameAction.
+    """Verifies pipeline: MockCamera -> Inference -> Session -> Stats -> GameAction.
 
-    Test nie wymaga Raspberry Pi, fizycznej kamery ani modelu AI.
+    No Raspberry Pi, physical camera, or AI model required.
     """
     controller = GUIIntegrationController()
 
@@ -22,7 +20,7 @@ def test_full_mock_flow_without_crashing(qtbot) -> None:
         controller.select_camera("CAMERA_1", "PLAYER_1")
         controller.prepare_game(ExampleGestureGame.GAME_ID, 1)
 
-        # Czekamy, aż mocki uruchomią pipeline i otrzymamy akcję dla gry.
+        # Wait for mocks to drive the pipeline and produce a game action.
         qtbot.waitUntil(
             lambda: len(actions_received) > 0,
             timeout=3_000,
@@ -30,7 +28,7 @@ def test_full_mock_flow_without_crashing(qtbot) -> None:
 
         assert actions_received[0].action_type == "GESTURE_INPUT"
 
-        # StatsSink zapisuje wyłącznie statystyki, nie ramki kamery.
+        # StatsSink stores only stats, not camera frames.
         assert len(controller.stats_sink._in_memory_db) > 0
 
         record = controller.stats_sink._in_memory_db[0]
@@ -39,7 +37,7 @@ def test_full_mock_flow_without_crashing(qtbot) -> None:
         assert "video" not in record
 
     finally:
-        # Wykona się także wtedy, gdy test/asercja zakończy się błędem.
+        # Runs even if the test/assertion fails.
         controller.shutdown()
 
 
@@ -52,7 +50,7 @@ def test_correct_gesture_produces_correct_game_action(qtbot) -> None:
         controller.select_camera("CAMERA_1", "PLAYER_1")
         controller.prepare_game(ExampleGestureGame.GAME_ID, 1)
 
-        # Domyślne zachowanie mocka: rozpoznany znak == oczekiwany znak == poprawny.
+        # Default mock behavior: recognized sign == expected sign == correct.
         qtbot.waitUntil(lambda: len(actions_received) > 0, timeout=3_000)
 
         assert actions_received[0].payload["is_correct"] is True

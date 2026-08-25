@@ -5,11 +5,10 @@ from handgame.core.models import CameraId
 
 class BaseCameraWorker(QObject):
     """
-    Abstrakcyjna baza dla workerów kamer.
-    Musi działać w osobnym QThread. Nie może blokować GUI.
+    Abstract base for camera workers. Must run in its own QThread; must not block the GUI.
 
-    Wszystkie sygnały niosą Signal(object) - konkretny typ payloadu jest
-    udokumentowany przy miejscu emisji (patrz docs/gui_camera_ai_contract.md).
+    All signals carry Signal(object) - actual payload type is documented at
+    the emission site (see docs/gui_camera_ai_contract.md).
     """
 
     frame_captured = Signal(object)  # FramePacket
@@ -31,6 +30,5 @@ class BaseCameraWorker(QObject):
         raise NotImplementedError
 
     def force_error(self, message: str) -> None:
-        """Mock-only capability: force the worker into CameraState.ERROR. Real hardware
-        workers may leave this unimplemented."""
+        """Mock-only: force worker into CameraState.ERROR. Real hardware workers may leave unimplemented."""
         raise NotImplementedError

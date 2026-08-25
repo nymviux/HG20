@@ -1,4 +1,4 @@
-"""Testy cyklu życia CameraManager - start/stop/restart, wątki, błędy."""
+"""CameraManager lifecycle tests - start/stop/restart, threads, errors."""
 
 from handgame.camera.camera_manager import CameraManager
 from handgame.core.models import CameraId, CameraState, PlayerId
@@ -25,8 +25,8 @@ def test_stop_camera_actually_stops_the_thread(qapp, qtbot):
     )
 
     mgr.stop_camera(CameraId.CAMERA_1)
-    # Once cleaned up, the QThread's underlying C++ object is gone (deleteLater()
-    # already ran) - assert via the manager's own bookkeeping, not a held reference.
+    # After cleanup the QThread's C++ object is gone (deleteLater already ran) -
+    # assert via the manager's bookkeeping, not a held reference.
     qtbot.waitUntil(lambda: CameraId.CAMERA_1 not in mgr._runtimes, timeout=3_000)
 
     assert mgr.get_camera_state(CameraId.CAMERA_1) == CameraState.DISCONNECTED
@@ -94,5 +94,5 @@ def test_shutdown_leaves_no_running_threads(qapp, qtbot):
     mgr.shutdown()
 
     assert len(mgr._runtimes) == 0
-    # Double shutdown must be safe too.
+    # Double shutdown must also be safe.
     mgr.shutdown()

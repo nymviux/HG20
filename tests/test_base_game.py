@@ -1,4 +1,4 @@
-"""Czyste testy Pythonowe BaseGame/ExampleGestureGame - bez qtbot, bez pętli zdarzeń Qt."""
+"""Pure Python tests for BaseGame/ExampleGestureGame - no qtbot, no Qt event loop."""
 
 from uuid import uuid4
 
@@ -10,7 +10,7 @@ from handgame.games.game_result import GameEndReason
 
 
 class RecordingSink:
-    """Stub GameEventSink, który po prostu zapisuje wszystko co dostał."""
+    """Stub GameEventSink that records everything it receives."""
 
     def __init__(self):
         self.states = []
@@ -88,7 +88,7 @@ def test_state_transitions_created_ready_running_finished():
     sink = RecordingSink()
     game = ExampleGestureGame(sink)
     assert game.get_state() == GameState.CREATED
-    # sequence_length is clamped to a minimum of 3 by ExampleGestureGame.
+    # sequence_length clamped to min 3 by ExampleGestureGame.
     context = make_context(sequence_length=3)
 
     game.start(context)

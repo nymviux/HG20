@@ -1,4 +1,4 @@
-"""Wynik zakończonej minigry."""
+"""Result of a finished minigame."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ class GameEndReason(Enum):
 
 @dataclass(frozen=True)
 class GameResult:
-    """Zamrożony wynik pojedynczej rozgrywki, gotowy do przekazania do StatsSink."""
+    """Frozen result of a single game, ready to pass to StatsSink."""
 
     session_id: UUID
     game_id: str

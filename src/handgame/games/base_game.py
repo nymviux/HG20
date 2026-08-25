@@ -1,14 +1,13 @@
-"""Wspólny kontrakt dla wszystkich minigier HandGame 2.0.
+"""Common contract for all HandGame 2.0 minigames.
 
-``BaseGame`` to czysta logika domenowa - żadnego Qt, żadnego dostępu do
-kamery/AI/GUI. Komunikacja na zewnątrz odbywa się wyłącznie przez wstrzyknięty
-``GameEventSink`` (patrz ``docs/game_framework.md``). Warstwę Qt (Signal/Slot)
-dokłada dopiero ``GameController``.
+``BaseGame`` is pure domain logic - no Qt, no camera/AI/GUI access. All
+external communication goes through the injected ``GameEventSink`` (see
+``docs/game_framework.md``). The Qt layer (Signal/Slot) is added only by
+``GameController``.
 
-``handle_gesture`` jest tu metodą konkretną (template method): wykonuje raz
-filtrację stanu/gracza/sesji, a właściwą logikę rozpoznawania zostawia
-abstrakcyjnemu hookowi ``_on_gesture``. Dzięki temu każda nowa minigra nie
-musi powielać tego samego boilerplate'u guardów.
+``handle_gesture`` is a concrete template method: it runs state/player/
+session filtering once, leaving actual recognition logic to the abstract
+``_on_gesture`` hook, so new minigames don't duplicate guard boilerplate.
 """
 
 from __future__ import annotations
@@ -26,7 +25,7 @@ from handgame.games.game_result import GameEndReason, GameResult
 
 logger = logging.getLogger(__name__)
 
-# Legalne przejścia stanu minigry. Każdy inny skok jest odrzucany.
+# Legal minigame state transitions. Any other jump is rejected.
 _ALLOWED_TRANSITIONS: dict[GameState, frozenset[GameState]] = {
     GameState.CREATED: frozenset({GameState.READY, GameState.ERROR}),
     GameState.READY: frozenset({GameState.RUNNING, GameState.ERROR}),
@@ -38,7 +37,7 @@ _ALLOWED_TRANSITIONS: dict[GameState, frozenset[GameState]] = {
 
 
 class GameEventSink(Protocol):
-    """Kanał, którym BaseGame komunikuje się na zewnątrz (bez Qt)."""
+    """Channel BaseGame uses to communicate externally (no Qt)."""
 
     def on_state_changed(self, state: GameState) -> None: ...
 
@@ -54,7 +53,7 @@ class GameEventSink(Protocol):
 
 
 class BaseGame(ABC):
-    """Abstrakcyjna baza minigry. Nie importuje QtWidgets ani żadnego modułu Qt."""
+    """Abstract minigame base. Imports no QtWidgets or Qt module."""
 
     def __init__(self, event_sink: GameEventSink) -> None:
         self._sink = event_sink
@@ -64,25 +63,25 @@ class BaseGame(ABC):
         self._result: GameResult | None = None
         self._started_at: datetime | None = None
 
-    # --- Wymagany kontrakt minigry ---
+    # --- Required minigame contract ---
 
     @abstractmethod
     def start(self, context: GameContext) -> None:
-        """Inicjalizuje minigrę na podstawie GameContext i wchodzi w RUNNING."""
+        """Initializes the minigame from GameContext and enters RUNNING."""
 
     @abstractmethod
     def update_frame(self, delta_ms: float) -> None:
-        """Wywoływane cyklicznie (np. na potrzeby timeoutów/hintów). Bez logiki kamery/AI."""
+        """Called periodically (e.g. timeouts/hints). No camera/AI logic."""
 
     @abstractmethod
     def end(self, reason: GameEndReason = GameEndReason.COMPLETED) -> GameResult:
-        """Kończy rozgrywkę i zwraca GameResult. Musi wywołać self._finalize(reason)."""
+        """Ends the game and returns GameResult. Must call self._finalize(reason)."""
 
     @abstractmethod
     def _on_gesture(self, event: GestureRecognitionEvent) -> None:
-        """Właściwa logika gry po przejściu filtrów handle_gesture (stan/gracz/sesja)."""
+        """Actual game logic after handle_gesture's state/player/session filters."""
 
-    # --- Konkretna implementacja wspólna dla wszystkich minigier ---
+    # --- Concrete implementation shared by all minigames ---
 
     def handle_gesture(self, event: GestureRecognitionEvent) -> None:
         if self._state != GameState.RUNNING:
@@ -119,7 +118,7 @@ class BaseGame(ABC):
         self._transition(GameState.RUNNING)
 
     def reset(self) -> None:
-        """Twardy reset - dozwolony z dowolnego stanu, przygotowuje grę pod kolejną sesję."""
+        """Hard reset - allowed from any state, preps game for next session."""
         self._context = None
         self._players = {}
         self._result = None
@@ -143,13 +142,13 @@ class BaseGame(ABC):
         return self._result
 
     def get_expected_sign(self, player_id: PlayerId) -> str | None:
-        """Domyślnie brak podpowiedzi - minigry ze stałą sekwencją nadpisują tę metodę."""
+        """No hint by default; fixed-sequence minigames override this."""
         return None
 
     def get_player_state(self, player_id: PlayerId) -> PlayerGameState:
         return self._players[player_id]
 
-    # --- Pomocnicze metody chronione dla podklas ---
+    # --- Protected helper methods for subclasses ---
 
     def _transition(self, new_state: GameState) -> None:
         allowed = _ALLOWED_TRANSITIONS.get(self._state, frozenset())
@@ -164,7 +163,7 @@ class BaseGame(ABC):
         self._sink.on_state_changed(new_state)
 
     def _begin(self, context: GameContext) -> None:
-        """CREATED -> READY: zapamiętuje kontekst i inicjalizuje stan graczy."""
+        """CREATED -> READY: stores context, inits player state."""
         self._context = context
         self._started_at = datetime.now(UTC)
         self._players = {
@@ -186,7 +185,7 @@ class BaseGame(ABC):
         return updated
 
     def _finalize(self, reason: GameEndReason) -> GameResult:
-        """Buduje GameResult, przechodzi do FINISHED i powiadamia sink. Idempotentne."""
+        """Builds GameResult, transitions to FINISHED, notifies sink. Idempotent."""
         if self._result is not None:
             return self._result
         if self._context is None:

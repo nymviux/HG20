@@ -34,8 +34,8 @@ class SessionManager(QObject):
     metrics_ready = Signal(object)  # SessionMetricsEvent
     game_finished = Signal(object)  # GameResult
     error_occurred = Signal(ApplicationErrorEvent)
-    # (session_id, player_id, camera_id, expected_sign | None) - GUIIntegrationController
-    # forwards this to InferenceManager.set_expected_sign() for the next recognition step.
+    # (session_id, player_id, camera_id, expected_sign | None)
+    # GUIIntegrationController forwards this to InferenceManager.set_expected_sign().
     expected_sign_ready = Signal(object)
 
     def __init__(self):
@@ -50,7 +50,7 @@ class SessionManager(QObject):
         self._player_camera_mapping: dict[PlayerId, CameraId] = {}
         self._selected_algorithms: dict[CameraId, str] = {}
 
-        # Weryfikacja środowiska zewnętrznego
+        # External hardware readiness flags
         self._sys_camera_ready = False
         self._sys_ai_ready = False
 
@@ -84,7 +84,7 @@ class SessionManager(QObject):
         self._difficulty_profile = build_difficulty_profile(difficulty)
         self._change_state(SessionState.PREPARING)
 
-        # Opcjonalnie: Jeśli sprzęt jest już ready z poprzedniej gry
+        # Auto-start if hardware is already ready from previous game
         self._check_auto_start()
 
     def register_camera_mapping(self, camera_id: CameraId, player_id: PlayerId) -> None:
@@ -126,8 +126,8 @@ class SessionManager(QObject):
         self._push_expected_signs()
 
     def _push_expected_signs(self) -> None:
-        """Przekazuje bieżący oczekiwany znak każdego gracza do InferenceManager
-        (przez GUIIntegrationController, patrz expected_sign_ready)."""
+        """Pushes each player's expected sign to InferenceManager
+        (via GUIIntegrationController, see expected_sign_ready)."""
         for player_id, camera_id in self._player_camera_mapping.items():
             sign = self._game_controller.get_expected_sign(player_id)
             self.expected_sign_ready.emit((self.session_id, player_id, camera_id, sign))

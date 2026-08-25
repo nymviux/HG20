@@ -1,7 +1,7 @@
 class HandGameException(Exception):
-    """Bazowa klasa wyjątków dla aplikacji HandGame."""
+    """Base exception for the HandGame app."""
     pass
 
 class InvalidStateTransitionError(HandGameException):
-    """Rzucany, gdy następuje próba nielegalnej zmiany stanu sesji."""
+    """Raised on an illegal session state transition."""
     pass
