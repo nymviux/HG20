@@ -1,0 +1,71 @@
+[tool.poetry]
+name = "handgame"
+version = "0.1.0"
+description = "HandGame 2.0 - modular educational PJM application"
+authors = ["HandGame Team <team@example.com>"]
+readme = "README.md"
+packages = [{ include = "handgame", from = "src" }]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.13"
+pyside6 = "^6.9.1"
+opencv-python = "^4.10.0.84"
+numpy = "^2.1.1"
+pydantic = "^2.9.2"
+pyyaml = "^6.0.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.3"
+pytest-qt = "^4.4.0"
+black = "^24.8.0"
+ruff = "^0.6.9"
+isort = "^5.13.2"
+mypy = "^1.11.2"
+pre-commit = "^3.8.0"
+
+[tool.poetry.scripts]
+handgame = "handgame.main:main"
+
+[build-system]
+requires = ["poetry-core>=1.9.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+src_paths = ["src", "tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N"]
+ignore = ["E203"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_unused_configs = true
+disallow_untyped_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = false
+pretty = true
+mypy_path = "src"
+packages = ["handgame"]
+exclude = ["tests"]
